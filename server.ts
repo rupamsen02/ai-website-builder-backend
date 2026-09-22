@@ -10,7 +10,7 @@ import { stripeWebhook } from "./controllers/stripeWebhook.js";
 const app = express();
 
 const corsOptions = {
-    origin: process.env.TRUSTED_ORIGINS,
+    origin: "https://ai-website-builder-frontend-three.vercel.app",
     credentials: true,
 }
 

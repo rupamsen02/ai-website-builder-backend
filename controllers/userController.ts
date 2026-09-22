@@ -3,21 +3,21 @@ import prisma from "../lib/prisma.js";
 import { clientOpenAI } from "../config/openai.js";
 import Stripe from "stripe";
 
-// export const getUserCredits = async (req: Request, res: Response) => {
-//   try {
-//     const userId = req.userId;
-//     if (!userId) {
-//       return res.status(401).json({ message: "Unauthorized User" });
-//     }
-//     const user = await prisma.user.findUnique({
-//       where: { id: userId },
-//     });
-//     res.json({ credits: user?.credits });
-//   } catch (error: any) {
-//     console.log(error);
-//     return res.status(500).json({ message: error.message });
-//   }
-// };
+export const getUserCredits = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized User" });
+    }
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+    res.json({ credits: user?.credits });
+  } catch (error: any) {
+    console.log(error);
+    return res.status(500).json({ message: error.message });
+  }
+};
 
 // Create New Project
 export const createUserProject = async (req: Request, res: Response) => {
@@ -30,11 +30,11 @@ export const createUserProject = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({
       where: { id: userId },
     });
-    // if (user && user.credits < 5) {
-    //   return res
-    //     .status(402)
-    //     .json({ message: "Add more credits to create projects!" });
-    // }
+    if (user && user.credits < 5) {
+      return res
+        .status(402)
+        .json({ message: "Add more credits to create projects!" });
+    }
     //Title
     const titleResponse = await clientOpenAI.chat.completions.create({
       model: "poolside/laguna-s-2.1:free",
@@ -83,11 +83,11 @@ export const createUserProject = async (req: Request, res: Response) => {
       },
     });
 
-    // // Update Users Total Credits
-    // await prisma.user.update({
-    //   where: { id: userId },
-    //   data: { credits: { decrement: 5 } },
-    // });
+    // Update Users Total Credits
+    await prisma.user.update({
+      where: { id: userId },
+      data: { credits: { decrement: 5 } },
+    });
     res.json({ projectId: project.id });
     //Enhace user prompt
     const promptEnhanceResponse = await clientOpenAI.chat.completions.create({
@@ -172,10 +172,10 @@ export const createUserProject = async (req: Request, res: Response) => {
           projectId: project.id,
         },
       });
-      // await prisma.user.update({
-      //   where: { id: userId },
-      //   data: { credits: { increment: 5 } },
-      // });
+      await prisma.user.update({
+        where: { id: userId },
+        data: { credits: { increment: 5 } },
+      });
       return;
     }
     //Create version for the project
@@ -209,10 +209,10 @@ export const createUserProject = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     // Update Users Total Credits
-    // await prisma.user.update({
-    //   where: { id: userId },
-    //   data: { credits: { increment: 5 } },
-    // });
+    await prisma.user.update({
+      where: { id: userId },
+      data: { credits: { increment: 5 } },
+    });
     console.log(error);
     return res.status(500).json({ message: error.message });
   }
@@ -293,58 +293,58 @@ export const togglePublish = async (req: Request, res: Response) => {
 };
 
 //Purchase Credits
-// export const purchaseCredits = async (req: Request, res: Response) => {
-//   try {
-//     interface Plan {
-//       credits: number;
-//       amount: number;
-//     }
-//     const plans = {
-//       basic: { credits: 100, amount: 5 },
-//       pro: { credits: 400, amount: 19 },
-//       enterprise: { credits: 1000, amount: 49 },
-//     };
-//     const userId = req.userId;
-//     const { planId } = req.body as { planId: keyof typeof plans };
-//     const origin = req.headers.origin as string; // frontend url
-//     const plan: Plan = plans[planId];
-//     if (!plan) {
-//       return res.status(404).json({ message: "Plan is not found." });
-//     }
-//     const transaction = await prisma.transaction.create({
-//       data: {
-//         userId: userId!,
-//         planId: req.body.planId,
-//         amount: plan.amount,
-//         credits: plan.credits,
-//       },
-//     });
-//     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-//     const session = await stripe.checkout.sessions.create({
-//       success_url: `${origin}/loading`,
-//       cancel_url: `${origin}`,
-//       line_items: [
-//         {
-//           price_data: {
-//             currency: "usd",
-//             product_data: {
-//               name: `AiWebsiteBuilder - ${plan.credits} credits`,
-//             },
-//             unit_amount: Math.floor(transaction.amount) * 100,
-//           },
-//           quantity: 1,
-//         },
-//       ],
-//       mode: "payment",
-//       metadata: {
-//         transactionId: transaction.id,
-//         appId: "ai-website-builder",
-//       },
-//       expires_at: Math.floor(Date.now() / 1000) + 30 * 60, //Expires in 30 minutes
-//     });
-//     res.json({ payment_link: session.url });
-//   } catch (error: any) {
-//     console.log(error.code || error.message);
-//     res.status(500).json({ message: error.message });
-//   }
-// };
+export const purchaseCredits = async (req: Request, res: Response) => {
+  try {
+    interface Plan {
+      credits: number;
+      amount: number;
+    }
+    const plans = {
+      basic: { credits: 100, amount: 5 },
+      pro: { credits: 400, amount: 19 },
+      enterprise: { credits: 1000, amount: 49 },
+    };
+    const userId = req.userId;
+    const { planId } = req.body as { planId: keyof typeof plans };
+    const origin = req.headers.origin as string; // frontend url
+    const plan: Plan = plans[planId];
+    if (!plan) {
+      return res.status(404).json({ message: "Plan is not found." });
+    }
+    const transaction = await prisma.transaction.create({
+      data: {
+        userId: userId!,
+        planId: req.body.planId,
+        amount: plan.amount,
+        credits: plan.credits,
+      },
+    });
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+    const session = await stripe.checkout.sessions.create({
+      success_url: `${origin}/loading`,
+      cancel_url: `${origin}`,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `AiWebsiteBuilder - ${plan.credits} credits`,
+            },
+            unit_amount: Math.floor(transaction.amount) * 100,
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      metadata: {
+        transactionId: transaction.id,
+        appId: "ai-website-builder",
+      },
+      expires_at: Math.floor(Date.now() / 1000) + 30 * 60, //Expires in 30 minutes
+    });
+    res.json({ payment_link: session.url });
+  } catch (error: any) {
+    console.log(error.code || error.message);
+    res.status(500).json({ message: error.message });
+  }
+};

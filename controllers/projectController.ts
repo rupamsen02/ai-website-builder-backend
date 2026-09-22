@@ -14,11 +14,11 @@ export const revision = async (req: Request, res: Response) => {
     if (!userId || !user) {
       return res.status(401).json({ message: "Unauthorized User" });
     }
-    // if (user.credits < 5) {
-    //   return res
-    //     .status(403)
-    //     .json({ message: "Add more credits to make more changes!" });
-    // }
+    if (user.credits < 5) {
+      return res
+        .status(403)
+        .json({ message: "Add more credits to make more changes!" });
+    }
     if (!message || message.trim() === "") {
       return res.status(400).json({ message: "Please enter a valid prompt" });
     }
@@ -37,11 +37,11 @@ export const revision = async (req: Request, res: Response) => {
         projectId,
       },
     });
-    // //Update Users Total Credits
-    // await prisma.user.update({
-    //   where: { id: userId },
-    //   data: { credits: { increment: 5 } },
-    // });
+    //Update Users Total Credits
+    await prisma.user.update({
+      where: { id: userId },
+      data: { credits: { increment: 5 } },
+    });
     //Enhance user prompt
     const promptEnhanceResponse = await clientOpenAI.chat.completions.create({
       model: "poolside/laguna-s-2.1:free",
@@ -111,10 +111,10 @@ export const revision = async (req: Request, res: Response) => {
           projectId,
         },
       });
-      // await prisma.user.update({
-      //   where: { id: userId },
-      //   data: { credits: { increment: 5 } },
-      // });
+      await prisma.user.update({
+        where: { id: userId },
+        data: { credits: { increment: 5 } },
+      });
       return;
     }
     const version = await prisma.version.create({
@@ -144,7 +144,7 @@ export const revision = async (req: Request, res: Response) => {
         current_version_index: version.id,
       },
     });
-    // res.json({ credits: user?.credits });
+    res.json({ credits: user?.credits });
   } catch (error: any) {
     await prisma.user.update({
       where: { id: userId },
